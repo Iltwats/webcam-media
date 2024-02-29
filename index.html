@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam Feed</title>
+</head>
+<body>
+    <h1>Webcam Feed</h1>
+    <video id="webcam-video" width="640" height="480" autoplay></video>
+    <br>
+    <label for="video-devices">Select Video Device:</label>
+    <select id="video-devices"></select>
+    <br>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const videoDevicesSelect = document.getElementById('video-devices');
+            const webcamVideo = document.getElementById('webcam-video');
+
+            // Get media devices
+            const devices = await navigator.mediaDevices.enumerateDevices();
+
+            // Populate video device options
+            devices.forEach(device => {
+                if (device.kind === 'videoinput') {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.text = device.label || `Camera ${videoDevicesSelect.length + 1}`;
+                    videoDevicesSelect.appendChild(option);
+                } 
+            });
+
+            // Get selected video device
+            const videoDeviceId = videoDevicesSelect.value;
+            const constraints = { video: { deviceId: videoDeviceId ? { exact: videoDeviceId } : undefined } };
+
+            // Start webcam feed
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(stream => {
+                    webcamVideo.srcObject = stream;
+                })
+                .catch(err => console.error('Error accessing media devices: ', err));
+
+            // Update webcam feed if the selected video device changes
+            videoDevicesSelect.addEventListener('change', async () => {
+                const videoDeviceId = videoDevicesSelect.value;
+                const constraints = { video: { deviceId: videoDeviceId ? { exact: videoDeviceId } : undefined } };
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                webcamVideo.srcObject = stream;
+
+                // Log selected devices
+                const selectedVideoDevice = devices.find(device => device.deviceId === videoDeviceId);
+                const videoDeviceName = selectedVideoDevice ? selectedVideoDevice.label : 'Unknown';
+                console.log(`Selected Video Device:${videoDeviceName} and device ID: ${videoDeviceId}`);
+
+            });
+
+        });
+    </script>
+</body>
+</html>
